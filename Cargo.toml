@@ -7,4 +7,13 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-
+winit = { version = "<0.19.4" }
+surfman = { version = "0.3.0", features = ["sm-winit", "sm-x11"] }
+gl = { version = "0.14" }
+euclid = { version = "0.20" }
+pathfinder_canvas = { version = "0.5.0" }
+pathfinder_gl = { version = "0.5.0" }
+pathfinder_geometry = { version = "0.5.0" }
+pathfinder_color = { version = "0.5.0" }
+pathfinder_renderer = { version = "0.5.0" }
+pathfinder_resources = { version = "0.5.0" }
