@@ -1,15 +1,16 @@
-import { createContext } from '../pathfinder/web_canvas/pkg/pathfinder_web_canvas.js'
+import { createContext } from 'pathfinder_web_canvas'
 
 function debug(text) {
   console.debug(text)
 }
 
 function render() {
-  let canvas = document.createElement("canvas")
-  createContext(canvas)
-
-  let app = document.getElementById("app")
-  app.appendChild(canvas)
+  let canvas = document.getElementById("app")
+  let ctx = createContext(canvas)
+  ctx.fillStyle = "green"
+  ctx.fillRect(10, 10, 150, 100)
+  ctx.lineWidth = 10
+  ctx.pfFlush()
 }
 
 window.onload = function() {
