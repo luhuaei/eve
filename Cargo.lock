@@ -411,6 +411,7 @@ dependencies = [
  "pathfinder_color",
  "pathfinder_geometry",
  "pathfinder_gl",
+ "pathfinder_gpu",
  "pathfinder_renderer",
  "pathfinder_resources",
  "surfman",
