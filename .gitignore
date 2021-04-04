@@ -1,2 +1,5 @@
 /target
+*.emacs
+js/dist
+.dir-locals.el
 **/node_modules/**
