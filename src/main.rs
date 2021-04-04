@@ -1,4 +1,3 @@
-use gl::FALSE;
 use pathfinder_canvas::CanvasFontContext;
 use pathfinder_canvas::CanvasRenderingContext2D;
 use pathfinder_canvas::Path2D;
@@ -7,7 +6,6 @@ use pathfinder_canvas::Vector2F;
 use pathfinder_canvas::Vector2I;
 use pathfinder_canvas::{Canvas, ColorF};
 use pathfinder_gl::{GLDevice, GLVersion};
-use pathfinder_gpu::RenderOptions;
 use pathfinder_renderer::{
     concurrent::{rayon::RayonExecutor, scene_proxy::SceneProxy},
     gpu::{
@@ -15,22 +13,18 @@ use pathfinder_renderer::{
         renderer::Renderer,
     },
     options::BuildOptions,
-    scene::Scene,
 };
 use pathfinder_resources::embedded::EmbeddedResourceLoader;
-use surfman::SurfaceInfo;
-use surfman::{platform::default::context, Context, Device, Surface};
 use surfman::{Connection, ContextAttributeFlags, ContextAttributes};
+use surfman::{Context, Device, Surface};
 use surfman::{GLVersion as SurfmanGLVersion, SurfaceType};
 use winit::dpi::LogicalSize;
 use winit::ControlFlow;
 use winit::Event;
 use winit::EventsLoop;
-use winit::KeyboardInput;
 use winit::Window;
 use winit::WindowBuilder;
 use winit::WindowEvent;
-use winit::WindowId;
 
 struct Demo {
     events_loop: EventsLoop,
@@ -53,14 +47,13 @@ impl Demo {
         let surface = self.build_surface(&connection, &window, &mut device, &context);
         self.load_gl(&device, &mut context, surface);
 
-        let pathfinder_device = self.build_pathfinder_device(&window, &device, &context);
+        let pathfinder_device = self.build_pathfinder_device(&device, &context);
 
         let mut render = self.build_render(&window, pathfinder_device);
-        let font_context = self.build_font_context();
 
         let mut is_first_render = true;
         self.events_loop.run_forever(|event| -> ControlFlow {
-            let mut should_render = is_first_render;
+            let mut _should_render = is_first_render;
             match event {
                 Event::WindowEvent {
                     event: WindowEvent::KeyboardInput { .. },
@@ -69,19 +62,22 @@ impl Demo {
                 | Event::WindowEvent {
                     event: WindowEvent::CloseRequested,
                     ..
-                } => return ControlFlow::Break,
+                } => {
+                    device.destroy_context(&mut context).unwrap();
+                    return ControlFlow::Break;
+                }
                 Event::WindowEvent {
                     event: WindowEvent::Refresh,
                     ..
                 } => {
-                    should_render = true;
+                    _should_render = true;
                 }
                 _ => return ControlFlow::Continue,
             }
 
-            if should_render {
+            if _should_render {
                 let canvas = Demo::build_canvas();
-                let scene = Demo::build_scene(canvas, &mut render);
+                Demo::build_scene(canvas, &mut render);
                 Demo::show(&device, &mut context);
             }
 
@@ -145,16 +141,7 @@ impl Demo {
         gl::load_with(|symbol_name| device.get_proc_address(&context, symbol_name));
     }
 
-    fn build_pathfinder_device(
-        &self,
-        window: &Window,
-        device: &Device,
-        context: &Context,
-    ) -> GLDevice {
-        let monitor_id = window.get_current_monitor();
-        let physical_size = monitor_id.get_dimensions();
-        let framebuffer_size =
-            Vector2I::new(physical_size.width as i32, physical_size.height as i32);
+    fn build_pathfinder_device(&self, device: &Device, context: &Context) -> GLDevice {
         let default_framebuffer = device
             .context_surface_info(context)
             .unwrap()
@@ -177,10 +164,6 @@ impl Demo {
         };
         let resource_loader = EmbeddedResourceLoader::new();
         Renderer::new(pdevice, &resource_loader, mode, options)
-    }
-
-    fn build_font_context(&self) -> CanvasFontContext {
-        CanvasFontContext::from_system_source()
     }
 
     fn build_canvas() -> CanvasRenderingContext2D {
@@ -207,17 +190,13 @@ impl Demo {
         canvas
     }
 
-    fn build_scene(
-        canvas: CanvasRenderingContext2D,
-        renderer: &mut Renderer<GLDevice>,
-    ) -> SceneProxy {
+    fn build_scene(canvas: CanvasRenderingContext2D, renderer: &mut Renderer<GLDevice>) {
         let mut scene = SceneProxy::from_scene(
             canvas.into_canvas().into_scene(),
             renderer.mode().level,
             RayonExecutor,
         );
         scene.build_and_render(renderer, BuildOptions::default());
-        scene
     }
 
     fn show(device: &Device, context: &mut Context) {
